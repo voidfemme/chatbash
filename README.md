@@ -26,7 +26,7 @@ leverages OpenAI's GPT-3.5-turbo to provide concise and accurate explanations.
 ## Installation
 
 1. Clone the repository:
-   ````
+   ```
    git clone https://github.com/voidfemme/chatbash.git
    cd chatbash
    ```
