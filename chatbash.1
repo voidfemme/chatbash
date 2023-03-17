@@ -1,0 +1,66 @@
+.TH CHATBASH 1 "17 March 2023"
+.SH NAME
+chatbash - Translate natural language prompts to bash commands and explain them
+.SH SYNOPSIS
+.B chatbash
+.RB [ -q ]
+.RI [ prompt ]
+.SH DESCRIPTION
+.B chatbash
+is a Python script that translates natural language prompts into bash commands. It leverages the OpenAI GPT-3.5-turbo model to assist with generating the commands and their explanations. You can also provide feedback to refine the generated command or request an explanation of the command.
+
+.SH OPTIONS
+.TP
+.BR -q
+Quick explanation mode. Only provides an explanation of the given prompt and exits.
+
+.SH USAGE
+To start the script, run:
+.B chatbash
+
+You can optionally provide a prompt as an argument:
+.B chatbash "your prompt"
+
+For a quick explanation of the command, use the '-q' flag:
+.B chatbash -q "your prompt"
+
+While using the script, you can enter the following options to interact with the generated command:
+.IP "1. (r)un"
+Runs the generated command.
+.IP "2. (q)uit"
+Exits the script.
+.IP "3. e(x)plain"
+Requests an explanation for the generated command.
+.IP "4. (f)eedback"
+Provide feedback to refine the generated command.
+.IP "5. (e)dit"
+Edit the generated command.
+.IP "6. (p)rint conversation"
+Prints the conversation history between the user and the assistant.
+
+.SH ENVIRONMENT VARIABLES
+The following environment variables are used by the script:
+
+.IP "OPENAI_API_KEY"
+The OpenAI API key used for interacting with the GPT-3.5-turbo model. This must be set before running the script.
+
+.SH EXAMPLES
+Translate a natural language prompt into a bash command:
+.B chatbash "create a new directory called my_directory"
+
+Translate a prompt and get a quick explanation of the generated command:
+.B chatbash -q "list all files in the current directory"
+
+.SH SOLIDARITY
+Workers of the world unite! Together, we can achieve great things and strive for a better future.
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Original author: John Doe
+
+.SH SEE ALSO
+.BR python (1),
+.BR bash (1),
+.BR openai (1)
