@@ -127,9 +127,13 @@ def main():
     prompt = " ".join(args)
 
     if prompt == "":
-        prompt = input("Write a command: ")
-        if prompt == "q":
-            sys.exit(0)
+        if quick_explain:
+            print("Error: No command provided for quick explanation.")
+            sys.exit(1)
+        else:
+            prompt = input("Write a command: ")
+            if prompt == "q":
+                sys.exit(0)
 
     if quick_explain:
         explanation = chat.request_explanation(prompt)
