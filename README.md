@@ -33,7 +33,7 @@ leverages OpenAI's GPT-3.5-turbo to provide concise and accurate explanations.
 2. Install the required Python libraries:
    ```
    pip install rich openai
-3. ```
+   ```
 4. Run the installation script:
    ```
    sudo ./install.sh
