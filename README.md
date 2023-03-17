@@ -17,6 +17,7 @@ leverages OpenAI's GPT-3.5-turbo to provide concise and accurate explanations.
 
 ## Prerequisites
 
+- Unix-based system
 - Python 3.6 or higher
 - `rich` library for rich-text console output
 - OpenAI Python library
