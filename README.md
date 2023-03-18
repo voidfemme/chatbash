@@ -19,8 +19,8 @@ leverages OpenAI's GPT-3.5-turbo to provide concise and accurate explanations.
 
 - Unix-based system
 - Python 3.6 or higher
-- `rich` library for rich-text console output
-- OpenAI Python library
+- `rich` library for rich-text console output (13.3.2)
+- OpenAI Python library (0.27.2)
 - A valid OpenAI API key
 
 ## Installation

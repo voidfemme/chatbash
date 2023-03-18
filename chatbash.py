@@ -1,16 +1,44 @@
 #!/usr/bin/env python3
 # WORKERS OF THE WORLD UNITE ✊
 from typing import Dict
-from rich import box
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-import openai
-import os
 import re
 import readline
-import subprocess
+import os
 import sys
+import subprocess
+import venv
+
+
+def setup_virtual_environment():
+    venv_path = "venv"
+    if not os.path.exists(venv_path):
+        venv.create(venv_path, with_pip=True)
+
+    if sys.platform == "win32":
+        activate_script = os.path.join(venv_path, "Scripts")
+    else:
+        activate_script = os.path.join(venv_path, "bin")
+
+    os.environ['PATH'] = f"{activate_script}{os.pathsep}{os.environ['PATH']}"
+
+    try:
+        global Text, Console, Panel, box
+        from rich import box
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.text import Text
+    except ImportError:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "rich", "openai"]
+        )
+        from rich import box
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.text import Text
+
+
+setup_virtual_environment()
+import openai  # noqa: E402
 
 console = Console()
 
