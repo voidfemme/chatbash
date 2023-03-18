@@ -30,7 +30,7 @@ class ChatHandler:
     def chat_gpt(self, conversation):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", messages=conversation, temperature=0
+                model="gpt-3.5-turbo", messages=conversation, temperature=0.1
             )
             content = response["choices"][0]["message"]["content"]
             return {"role": "assistant", "content": content}
@@ -60,7 +60,6 @@ class ChatHandler:
         self.update_conversation({"role": "user", "content": explanation_request})
         explanation = self.chat_gpt(self.conversation)["content"]
         self.update_conversation({"role": "assistant", "content": explanation})
-        console.print(explanation)
 
     def refine_prompt(self, user_feedback: str) -> str:
         refined_prompt = self.chat_gpt(self.conversation)["content"]
@@ -71,7 +70,7 @@ class ChatHandler:
         self.update_conversation(
             {
                 "role": "user",
-                "content": f"echo this command if correct, or echo a revised version if there are errors: {command}",
+                "content": f"echo the command if correct, or revise if there are errors: {command}",
             }
         )
         corrected_command = self.chat_gpt(self.conversation)["content"]
@@ -125,15 +124,17 @@ def main():
 
     if quick_explain:
         explanation = chat.request_explanation(prompt)
-        chat.update_conversation({"role": "assistant", "content": explanation})
         sys.exit(0)
 
     conversation = [
         {
             "role": "system",
-            "content": "rewrite the statement as a bash command. Omit formatting and commentary.",
+            "content": "Your goal is to collaborate with the user to generate a bash command. Only respond with one bash command per reply",
         },
-        {"role": "user", "content": prompt},
+        {
+            "role": "user",
+            "content": f"given the following prompt, generate a bash command. do not use any formatting. Do not provide any commentary: {prompt}",
+        },
     ]
 
     chat_gpt_response = chat.chat_gpt(conversation)["content"]
@@ -162,9 +163,9 @@ def main():
                 chat.request_explanation(command)
             case "f":
                 user_feedback = input("Feedback: ")
+                chat.update_conversation({"role": "user", "content": user_feedback})
                 refined_prompt = chat.refine_prompt(user_feedback)
                 command = chat.extract_code_block(refined_prompt)
-                print(command)
             case "e":
                 corrected_command = chat.verify_command(command)
                 command = chat.extract_code_block(corrected_command)
@@ -174,9 +175,8 @@ def main():
             case "q":
                 sys.exit(0)
             case "t":
-                chat.update_conversation(
-                    {"role": "user", "content": "Please provide another command"}
-                )
+                if chat.conversation:
+                    chat.conversation.pop()
                 chat_gpt_response = chat.chat_gpt(chat.conversation)["content"]
                 chat.update_conversation(
                     {"role": "assistant", "content": chat_gpt_response}
