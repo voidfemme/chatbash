@@ -148,7 +148,7 @@ def main():
         )
         console.print(f"Command: {command}", style="bold")
         run_flag = input(
-            "1. run? [(r)un/(q)uit/e(x)plain/(f)eedback/(e)dit/(p)rint conversation]: "
+            "1. run? [(r)un/(q)uit/e(x)plain/(f)eedback/(e)dit/(p)rint conversation/(t)ry again]: "
         )
         match run_flag:
             case "r":
