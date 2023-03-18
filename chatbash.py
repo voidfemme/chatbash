@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# WORKERS OF THE WORLD UNITE! ✊
+# WORKERS OF THE WORLD UNITE ✊
 from typing import Dict
 from rich import box
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 import openai
@@ -24,7 +23,7 @@ class ChatHandler:
     def set_api_key(self):
         try:
             openai.api_key = os.environ["OPENAI_API_KEY"]
-        except:
+        except KeyError:
             print("Error: Could not set API key")
             sys.exit(1)
 
@@ -45,6 +44,14 @@ class ChatHandler:
             role = append["role"]
             content = append["content"]
             console.print(f"{role.capitalize()}: {content}", style="green")
+
+    def extract_code_block(self, response: str) -> str:
+        code_block_pattern = r"```(.+?)```"
+        match = re.search(code_block_pattern, response, re.S)
+        if match:
+            return match.group(1).strip()
+        else:
+            return response.strip()
 
     def request_explanation(self, command: str) -> str:
         explanation_request = (
@@ -67,9 +74,10 @@ class ChatHandler:
                 "content": f"echo this command if correct, or echo a revised version if there are errors: {command}",
             }
         )
-        corrected_command = self.chat_gpt(self.conversation["content"])
-        self.update_conversation({"role": "user", "content": corrected_command})
-        return corrected_command.strip()
+        corrected_command = self.chat_gpt(self.conversation)["content"]
+        edited_command = get_prompt_input(corrected_command)
+        self.update_conversation({"role": "user", "content": edited_command})
+        return edited_command.strip()
 
     def print_conversation(self):
         conversation_text = Text("\n\nConversation so far:\n\n", style="bold")
@@ -81,26 +89,6 @@ class ChatHandler:
             conversation_text.append(f"{content}\n", style=message_style)
         panel = Panel(conversation_text, box=box.ROUNDED, style="white on black")
         console.print(panel)
-
-    def process_gpt_response(self, content, instruction):
-        try:
-            response = openai.Edit.create(
-                input=content,
-                instruction=instruction,
-                engine="text-davinci-edit-001",
-                temperature=0,
-            )
-            return response["choices"][0]["text"]
-        except Exception as e:
-            console.print(e, style="red")
-            sys.exit(1)
-
-    def refine_prompt_with_chatbot(self, user_feedback):
-        self.update_conversation({"role": "user", "content": user_feedback})
-
-        refined_prompt = self.chat_gpt(self.conversation)["content"]
-        self.update_conversation({"role": "assistant", "content": refined_prompt})
-        return refined_prompt
 
 
 def get_prompt_input(prompt: str) -> str:
@@ -150,55 +138,52 @@ def main():
 
     chat_gpt_response = chat.chat_gpt(conversation)["content"]
     chat.update_conversation({"role": "assistant", "content": chat_gpt_response})
-
-    command = chat_gpt_response.strip()
+    command = chat.extract_code_block(chat_gpt_response)
 
     while True:
         console.print(
             "Careful! Bash commands are powerful... make sure you understand the prompt",
             style="red",
         )
+        console.print(f"Command: {command}", style="bold")
         run_flag = input(
             "1. run? [(r)un/(q)uit/e(x)plain/(f)eedback/(e)dit/(p)rint conversation]: "
         )
         match run_flag:
-            # exit and run the command
             case "r":
                 try:
                     subprocess.run(command, shell=True, check=True)
-                    exit(0)
+                    sys.exit(0)
                 except subprocess.CalledProcessError as e:
                     print(f"Error executing the command: {e}")
-                    exit(1)
+                    sys.exit(1)
 
-            # explain the command
             case "x":
                 chat.request_explanation(command)
             case "f":
                 user_feedback = input("Feedback: ")
-                refined_prompt = chat.refine_prompt_with_chatbot(user_feedback)
-                chat.update_conversation(
-                    {"role": "assistant", "content": refined_prompt}
-                )
-                command = chat.process_gpt_response(
-                    refined_prompt,
-                    "remove any formatting and leave the bash command by itself",
-                )
+                refined_prompt = chat.refine_prompt(user_feedback)
+                command = chat.extract_code_block(refined_prompt)
                 print(command)
             case "e":
-                chat_gpt_response = get_prompt_input(chat_gpt_response)
-                chat.update_conversation(
-                    {"role": "assistant", "content": chat_gpt_response}
-                )
-                command = chat.process_gpt_response(
-                    chat_gpt_response,
-                    "remove any formatting and return the bash command by itself",
-                )
+                corrected_command = chat.verify_command(command)
+                command = chat.extract_code_block(corrected_command)
                 console.print(command, style="blue")
             case "p":
                 chat.print_conversation()
-            case _:
+            case "q":
                 sys.exit(0)
+            case "t":
+                chat.update_conversation(
+                    {"role": "user", "content": "Please provide another command"}
+                )
+                chat_gpt_response = chat.chat_gpt(chat.conversation)["content"]
+                chat.update_conversation(
+                    {"role": "assistant", "content": chat_gpt_response}
+                )
+                command = chat.extract_code_block(chat_gpt_response)
+            case _:
+                continue
 
 
 if __name__ == "__main__":
