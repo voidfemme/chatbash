@@ -19,7 +19,7 @@ def setup_virtual_environment():
     else:
         activate_script = os.path.join(venv_path, "bin")
 
-    os.environ['PATH'] = f"{activate_script}{os.pathsep}{os.environ['PATH']}"
+    os.environ["PATH"] = f"{activate_script}{os.pathsep}{os.environ['PATH']}"
 
     try:
         global Text, Console, Panel, box
@@ -75,11 +75,19 @@ class ChatHandler:
 
     def extract_code_block(self, response: str) -> str:
         code_block_pattern = r"```(.+?)```"
-        match = re.search(code_block_pattern, response, re.S)
-        if match:
-            return match.group(1).strip()
+        code_snippet_pattern = r"`(.+?)`"
+        code_block_match = re.search(code_block_pattern, response, re.S)
+        code_snippet_match = re.search(code_snippet_pattern, response, re.S)
+        if code_block_match:
+            return code_block_match.group(1).strip()
+        elif code_snippet_match:
+            return code_snippet_match.group(1).strip()
         else:
-            return response.strip()
+            save_flag = input("would you like to save this reply as the command? (y/n): ")
+            if save_flag.lower() == "y":
+                return response.strip()
+            else:
+                pass
 
     def request_explanation(self, command: str) -> str:
         explanation_request = (
@@ -119,7 +127,6 @@ class ChatHandler:
 
 
 def get_prompt_input(prompt: str) -> str:
-    escaped_prompt = re.escape(prompt)
     readline.set_startup_hook(lambda: readline.insert_text(prompt).replace("\\", ""))
     try:
         user_input = input("Write a command (q for quit): ")
@@ -130,14 +137,20 @@ def get_prompt_input(prompt: str) -> str:
         readline.set_startup_hook()
 
 
+def welcome_to_chatbash() -> None:
+    print("Welcome to chatbash. This program is designed to help you collaborate with chatGPT to craft a bash command.")
+    print("Use the feedback option to refine your prompt, or ask for a new one entirely!")
+    print("Tip: request for your original bash command if the program overwrote it. It would be happy to oblige.")
+
 def main():
+    welcome_to_chatbash()
     chat = ChatHandler()
     args = sys.argv[1:]
     quick_explain = False
 
-    if "-q" in args:
+    if "-x" in args:
         quick_explain = True
-        args.remove("-q")
+        args.remove("-x")
 
     prompt = " ".join(args)
 
@@ -146,7 +159,7 @@ def main():
             print("Error: No command provided for quick explanation.")
             sys.exit(1)
         else:
-            prompt = input("Write a command: ")
+            prompt = input("Write a natural language command: ")
             if prompt == "q":
                 sys.exit(0)
 
@@ -188,21 +201,26 @@ def main():
                     sys.exit(1)
 
             case "x":
+                print("\n\n")
                 chat.request_explanation(command)
             case "f":
                 user_feedback = input("Feedback: ")
+                print("\n\n")
                 chat.update_conversation({"role": "user", "content": user_feedback})
                 refined_prompt = chat.refine_prompt(user_feedback)
                 command = chat.extract_code_block(refined_prompt)
             case "e":
+                print("\n\n")
                 corrected_command = chat.verify_command(command)
                 command = chat.extract_code_block(corrected_command)
                 console.print(command, style="blue")
             case "p":
+                print("\n\n")
                 chat.print_conversation()
             case "q":
                 sys.exit(0)
             case "t":
+                print("\n\n")
                 if chat.conversation:
                     chat.conversation.pop()
                 chat_gpt_response = chat.chat_gpt(chat.conversation)["content"]
