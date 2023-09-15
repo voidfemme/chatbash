@@ -39,6 +39,7 @@ def setup_virtual_environment():
 
 setup_virtual_environment()
 import openai  # noqa: E402
+from rich.table import Table  # noqa: E402
 
 console = Console()
 
@@ -58,7 +59,7 @@ class ChatHandler:
     def chat_gpt(self, conversation):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", messages=conversation, temperature=0.1
+                model="gpt-4", messages=conversation, temperature=0.1
             )
             content = response["choices"][0]["message"]["content"]
             return {"role": "assistant", "content": content}
@@ -83,7 +84,9 @@ class ChatHandler:
         elif code_snippet_match:
             return code_snippet_match.group(1).strip()
         else:
-            save_flag = input("would you like to save this reply as the command? (y/n): ")
+            save_flag = input(
+                "would you like to save this reply as the command? (y/n): "
+            )
             if save_flag.lower() == "y":
                 return response.strip()
             else:
@@ -138,9 +141,23 @@ def get_prompt_input(prompt: str) -> str:
 
 
 def welcome_to_chatbash() -> None:
-    print("Welcome to chatbash. This program is designed to help you collaborate with chatGPT to craft a bash command.")
-    print("Use the feedback option to refine your prompt, or ask for a new one entirely!")
-    print("Tip: request for your original bash command if the program overwrote it. It would be happy to oblige.")
+    title = Text("Welcome to chatbash", style="bold_underline")
+    description = Text(
+        "This program is designed to help you collaborate with chatGPT to craft a bash command."
+    )
+
+    instructions = Table(box=None, expand=True)
+    instructions.add_column("Instructions")
+    instructions.add_row(
+        "Use the feedback option to refine your prompt, or ask for a new one entirely!"
+    )
+    instructions.add_row(
+        "Tip: request for your original bash command if the program overwrote it. It would be happy to oblige."
+    )
+    console.print(Panel(title, expand=True))
+    console.print(description)
+    console.print(instructions)
+
 
 def main():
     welcome_to_chatbash()
@@ -159,12 +176,13 @@ def main():
             print("Error: No command provided for quick explanation.")
             sys.exit(1)
         else:
-            prompt = input("Write a natural language command: ")
+            prompt = input("Write a natural language command, or 'q' to quit: ")
             if prompt == "q":
                 sys.exit(0)
 
     if quick_explain:
         explanation = chat.request_explanation(prompt)
+        print("")
         sys.exit(0)
 
     conversation = [
